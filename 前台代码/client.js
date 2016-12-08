@@ -1,4 +1,4 @@
- var  wsServer = 'ws://localhost:8888/Demo'; 
+ var  wsServer = 'ws://210.73.27.35:9501'; 
  var  websocket = new WebSocket(wsServer); 
  websocket.onopen = function (evt) { onOpen(evt) }; 
  websocket.onclose = function (evt) { onClose(evt) }; 
@@ -9,10 +9,7 @@
  } 
  function onClose(evt) { 
     console.log("Disconnected"); 
- } 
- function onMessage(evt) { 
-    console.log(evt.data); 
- } 
+ }
  function onError(evt) { 
     console.log('Error occured: ' + evt.data); 
  }

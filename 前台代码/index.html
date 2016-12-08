@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>你的名字</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container" style="width: 800px;">
+    <div id='main-body' class="row" style="height: 800px;border-left: solid 1px;border-right: solid 1px;padding-left: 10px;padding-right: 10px;padding-top: 10px;overflow:scroll;">
+
+    </div>
+    <hr/>
+    <form class="form-horizontal" role="form">
+        <div class="form-group">
+            <div class="col-md-10">
+                <input type="text" class="form-control" id="msg" onkeydown="if(event.keyCode==13){return sendMsg();}">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary" id="send" onclick="sendMsg()">发送消息</button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">你的名字</h4>
+            </div>
+            <div class="modal-body" style="height: 120px;">
+                <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label for="yourname" class="col-md-3 control-label">请输入你的名字</label>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="yourname" onkeydown="if(event.keyCode==13){return setName()}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" id="confirm" onclick="setName()">确　定</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <footer class="bs-docs-footer">
+                    <p class="text-center">Design By Koastal<sup>&copy;</sup></p>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<script src="client.js"></script>
+<script>
+    $(function () {
+        $('#myModal').modal('toggle');
+    });
+    $("#yourname").click(function () {
+        $("#yourname").val('');
+    });
+    $("#msg").click(function () {
+        $("#msg").val('');
+    });
+    function sendMsg() {
+        if($("#msg").val() == '' && $("#msg").val() == '发送消息不能为空'){
+            $("#msg").val("发送消息不能为空");
+        }else{
+            var msg = '{"type":"msg","data":"'+$("#msg").val()+'"}';
+            websocket.send(msg);
+
+            var content = '<div>'+
+                             '<p class="text-right">我 '+getNowFormatDate()+'</p>'+
+                             '<p class="text-right"><span class="label label-info">'+$("#msg").val()+'</span></p>'+
+                          '</div>';
+            $("#main-body").append(content);
+            $("#msg").val('');
+        }
+        return false;
+    }
+    function setName() {
+        if($("#yourname").val() == '' && $("#yourname").val() == '用户名不能为空'){
+            $("#yourname").val("用户名不能为空");
+        }else{
+            var msg = '{"type":"name","data":"'+$("#yourname").val()+'"}';
+            websocket.send(msg);
+            $('#myModal').modal('toggle');
+        }
+        return false;
+    };
+    function getNowFormatDate() {
+        var date = new Date();
+        var seperator1 = "-";
+        var seperator2 = ":";
+        var month = date.getMonth() + 1;
+        var strDate = date.getDate();
+        if (month >= 1 && month <= 9) {
+            month = "0" + month;
+        }
+        if (strDate >= 0 && strDate <= 9) {
+            strDate = "0" + strDate;
+        }
+        var currentdate = date.getFullYear() + seperator1 + month + seperator1 + strDate
+                + " " + date.getHours() + seperator2 + date.getMinutes()
+                + seperator2 + date.getSeconds();
+        return currentdate;
+    }
+    function onMessage(evt) {
+        console.log(evt.data);
+        var result = JSON.parse(evt.data);
+        var content = '<div>';
+        if(result.from == 'sys'){
+            //显示系统通知
+            content =  '<p class="text-left">系统 '+getNowFormatDate()+'</p>' +
+                       '<p class="text-left"><span class="label label-warning">'+result.data+'</span></p>';
+        }else{
+            //显示别人发送的消息
+            content = '<p class="text-left">'+result.from+' '+getNowFormatDate()+'</p>' +
+                      '<p class="text-left"><span class="label label-primary">'+result.data+'</span></p>';
+        }
+        content += '</div>';
+        $("#main-body").append(content);
+    }
+</script>
+</body>
+</html>
