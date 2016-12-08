@@ -4,6 +4,9 @@
  }
  catch (ex){
      alert('浏览器不支持 WebSocket');
+     window.opener=null;
+     window.open('','_self');
+     window.close();
  }
  websocket.onopen = function (evt) { onOpen(evt) }; 
  websocket.onclose = function (evt) { onClose(evt) }; 
