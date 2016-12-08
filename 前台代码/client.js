@@ -1,5 +1,10 @@
- var  wsServer = 'ws://210.73.27.35:9501'; 
- var  websocket = new WebSocket(wsServer); 
+ var  wsServer = 'ws://210.73.27.35:9501';
+ try {
+     websocket = new WebSocket(wsServer);
+ }
+ catch (ex){
+     alert('浏览器不支持 WebSocket');
+ }
  websocket.onopen = function (evt) { onOpen(evt) }; 
  websocket.onclose = function (evt) { onClose(evt) }; 
  websocket.onmessage = function (evt) { onMessage(evt) }; 
