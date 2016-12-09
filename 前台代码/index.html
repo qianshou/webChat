@@ -134,7 +134,7 @@
         if($("#yourname").val() == ''){
             $("#yourname").val("用户名不能为空");
         }else{
-            var msg = '{"type":"login","to":"sys","name":"'+$("#yourname").val()+'"}';
+            var msg = '{"type":"login","to":"sys","data":"'+$("#yourname").val()+'"}';
             websocket.send(msg);
         }
         return false;
