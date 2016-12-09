@@ -24,15 +24,20 @@ class R {
         self::$instance = null;
     }
 }
-function broadcast($server,$from,$to,$data){
+function broadcast($server,$cfd,$from,$json){
     $redis = R::getInstance();
     $fd_list = $redis->sMembers('fdList');
-    $username = ($from == 'sys')? 'sys':$redis->get("user".$from);
-    $msg = '{"from":"'.$username.'","to":"'.$to.'","data":"'.$data.'"}';;
-    echo "broadcast ".$msg."\n";
-    R::close();
-    foreach ($fd_list as $fd){
-        if($fd == $from)continue;
-        $server->push($fd , $msg);
+    if($from == 'sys'){
+        //系统消息，无差别发送
+        foreach ($fd_list as $fd){
+            $server->push($fd,$json);
+        }
+    }else{
+        //public消息，不发送给cfd
+        foreach ($fd_list as $fd){
+            if($fd == $cfd)continue;
+            $server->push($fd,$json);
+        }
     }
+    R::close();
 }

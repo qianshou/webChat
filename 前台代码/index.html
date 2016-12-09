@@ -16,21 +16,54 @@
     <![endif]-->
 </head>
 <body>
-<div class="container" style="width: 800px;">
-    <div id='main-body' class="row" style="height: 800px;border-left: solid 1px;border-right: solid 1px;padding-left: 10px;padding-right: 10px;padding-top: 10px;overflow:scroll;">
-
-    </div>
-    <hr/>
-    <form class="form-horizontal" role="form">
-        <div class="form-group">
-            <div class="col-md-10">
-                <input type="text" class="form-control" id="msg" onkeydown="if(event.keyCode==13){return sendMsg();}">
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-primary" id="send" onclick="sendMsg()">发送消息</button>
+<div class="container">
+    <div>
+        <div class="page-header">
+            <div class="row">
+                    <h1>你的名字 <small>基于websocket的在线聊天室</small></h1>
             </div>
         </div>
-    </form>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">当前用户</div>
+                <div class="panel-body">
+                    <p id="username"></p>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">在线用户</div>
+                <ul class="list-group" id="UserList">
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div id='main-body' class="row" style="height: 600px;padding-left: 10px;padding-right: 10px;padding-top: 10px;overflow:scroll;">
+
+            </div>
+            <hr/>
+            <form class="form-horizontal" role="form">
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <select id="sendto" class="form-control">
+                            <option value="all">所有人</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <input type="text" class="form-control" id="msg" onkeydown="if(event.keyCode==13){return sendMsg();}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-primary" id="send" onclick="sendMsg()">发送消息</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <hr/>
+    <footer class="bs-docs-footer">
+        <p class="text-center">Design By Koastal<sup>&copy;</sup></p>
+    </footer>
 </div>
 <!-- Modal -->
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-keyboard="false" data-backdrop="static">
@@ -76,28 +109,33 @@
         $("#msg").val('');
     });
     function sendMsg() {
-        if($("#msg").val() == '' && $("#msg").val() == '发送消息不能为空'){
+        if($("#msg").val() == ''){
             $("#msg").val("发送消息不能为空");
         }else{
-            var msg = '{"type":"msg","data":"'+$("#msg").val()+'"}';
+            var msgTo = $("#sendto option:checked").val();
+            var msg = '';
+            var content = '<div>';
+            if(msgTo == 'all'){
+                msg = '{"type":"public","to":"all","data":"'+$("#msg").val()+'"}';
+                content +=  '<p class="text-right">我 '+getNowFormatDate()+'</p>'
+            }else{
+                msg = '{"type":"private","to":"'+msgTo+'","data":"'+$("#msg").val()+'"}';
+                content +=  '<p class="text-right">我对'+msgTo+'说 '+getNowFormatDate()+'</p>';
+            }
             websocket.send(msg);
-
-            var content = '<div>'+
-                             '<p class="text-right">我 '+getNowFormatDate()+'</p>'+
-                             '<p class="text-right"><span class="label label-info">'+$("#msg").val()+'</span></p>'+
-                          '</div>';
+            content += '<p class="text-right"><span class="label label-info">'+$("#msg").val()+'</span></p>';
+            content += '</div>';
             $("#main-body").append(content);
             $("#msg").val('');
         }
         return false;
     }
     function setName() {
-        if($("#yourname").val() == '' && $("#yourname").val() == '用户名不能为空'){
+        if($("#yourname").val() == ''){
             $("#yourname").val("用户名不能为空");
         }else{
-            var msg = '{"type":"name","data":"'+$("#yourname").val()+'"}';
+            var msg = '{"type":"login","to":"sys","name":"'+$("#yourname").val()+'"}';
             websocket.send(msg);
-            $('#myModal').modal('toggle');
         }
         return false;
     };
@@ -122,17 +160,61 @@
         console.log(evt.data);
         var result = JSON.parse(evt.data);
         var content = '<div>';
+        content =  '<p class="text-left">系统 【'+getNowFormatDate()+'】</p>';
         if(result.from == 'sys'){
-            //显示系统通知
-            content =  '<p class="text-left">系统 '+getNowFormatDate()+'</p>' +
-                       '<p class="text-left"><span class="label label-warning">'+result.data+'</span></p>';
+            switch (result.type){
+                case 'nameCheck':
+                    if(result.data == 'success'){
+                        $('#myModal').modal('toggle');
+                        $('#username').text($("#yourname").val());
+                    }else{
+                        $("#yourname").val("用户名重复，换一个吧");
+                    }
+                    break;
+                case 'initUser':
+                    var userList = result.data;
+                    var list = '',user = '';
+                    for(var i=0;i<userList.length;i++){
+                        list += '<li class="list-group-item">'+userList[i]+'</li>';
+                        user += '<option value="'+userList[i]+'">'+userList[i]+'</option>';
+                    }
+                    $("#UserList").empty();
+                    $("#UserList").append(list);
+                    $("#sendto").html('<option value="all">所有人</option>');
+                    $("#sendto").append(user);
+                    break;
+                case 'login':
+                    var list = '<li class="list-group-item">'+result.data+'</li>';
+                    $("#UserList").append(list);
+                    var user = '<option value="'+result.data+'">'+result.data+'</option>';
+                    $("#sendto").append(user);
+                    content += '<p class="text-left"><span class="label label-warning">'+result.data+'已登录</span></p>';
+                    break;
+                case 'logout':
+                    $("#UserList li:contains('"+result.data+"')").remove();
+                    $("#sendto option:contains('"+result.data+"')").remove();
+                    content += '<p class="text-left"><span class="label label-warning">'+result.data+'已退出</span></p>';
+                    break;
+            }
+            if(result.type == 'login' || result.type == 'logout'){
+                content += '</div>';
+                $("#main-body").append(content);
+            }
         }else{
-            //显示别人发送的消息
-            content = '<p class="text-left">'+result.from+' '+getNowFormatDate()+'</p>' +
-                      '<p class="text-left"><span class="label label-primary">'+result.data+'</span></p>';
+            var content = '<div>';
+            switch (result.type){
+                case 'public':
+                    content += '<p class="text-left">'+result.from+' 【'+getNowFormatDate()+'】</p>';
+                    content += '<p class="text-left"><span class="label label-primary">'+result.data+'</span></p>';
+                    break;
+                case 'private':
+                    content += '<p class="text-left">'+result.from+'对你说 【'+getNowFormatDate()+'】</p>';
+                    content += '<p class="text-left"><span class="label label-default">'+result.data+'</span></p>';
+                    break;
+            }
+            content += '</div>';
+            $("#main-body").append(content);
         }
-        content += '</div>';
-        $("#main-body").append(content);
     }
 </script>
 </body>

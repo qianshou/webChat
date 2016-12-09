@@ -7,9 +7,13 @@
  */
 $redis = new Redis();
 $redis->connect('210.73.27.35', 6379);
-$redis->del('fdCounter','fdList');
-$user_list = $redis->getKeys("user*");
-foreach ($user_list as $user){
-    $redis->del($user);
+$uid_list = $redis->getKeys("uid#*");
+foreach ($uid_list as $id){
+    $redis->del($id);
 }
+$uname_list = $redis->getKeys("uname#*");
+foreach ($uname_list as $name){
+    $redis->del($name);
+}
+$redis->del('fdList');
 $redis->close();
