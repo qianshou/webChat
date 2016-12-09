@@ -10,6 +10,8 @@ php-swoole扩展
 php-redis扩展
 
 ## 代码说明
+=======
+代码说明：
 
 | 文件        | 说明                      |
 | --------- | ----------------------- |
@@ -55,4 +57,3 @@ nohup /usr/bin/php /var/www/ws.php >> /dev/null 2>&1 &
 | 用户登录        | `{type:login, to:sys, data:你的名字}`     |
 | 发送public消息  | `{type:public, to:all, data:消息内容}`    |
 | 发送private消息 | `{type:private, to:消息接收人, data:消息内容}` |
-
